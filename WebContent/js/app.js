@@ -106,7 +106,7 @@ createApp({
       catch (e) { this.handleErr(e,'提案'); }
     },
     async loadCoin() {
-      try { const r = await axios.get(`${COLL}/VNLKT51?count=200`); this.coinList = this.docsOnly(r.data); }
+      try { const r = await axios.get(`${COLL}/VNLKT51?count=100`); this.coinList = this.docsOnly(r.data); }
       catch (e) { this.handleErr(e,'活力幣'); }
     },
     docsOnly(arr) { return Array.isArray(arr) ? arr.filter(e => e && e['@unid']) : []; },

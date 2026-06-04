@@ -30,7 +30,7 @@ Sub NLK_IssueCoin(db As NotesDatabase, employeeID As String, _
     If Left(empName, 3) = "CN=" Then empName = Mid(empName, 4)
 
     Set coinDoc = db.CreateDocument()
-    coinDoc.Form         = "FNLKM05"
+    coinDoc.Form         = "FNLKT05"
     coinDoc.EmployeeID   = employeeID
     coinDoc.EmployeeName = empName
     coinDoc.Amount       = amount

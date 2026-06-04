@@ -20,7 +20,7 @@ Use "LNLKM01 VitalUtils"
 	Dim keyArr(1) As String
 
 	Set db = ss.CurrentDatabase
-	Set view = db.GetView("VNLK10")
+	Set view = db.GetView("VNLKM10")
 	If view Is Nothing Then Exit Sub
 
 	keyArr(0) = ss.UserName
