@@ -3,137 +3,400 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚡ NovaLink</title>
+  <title>NovaLink ⚡ 員工體驗與互動社群平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="app">
+  <div id="app" v-cloak>
 
-    <!-- 頂部導覽列 -->
-    <nav class="navbar">
-      <div class="navbar-brand">⚡ NovaLink</div>
-      <div class="navbar-menu">
-        <a @click="currentPage = 'mood'" :class="{active: currentPage === 'mood'}">情緒溫度計</a>
-        <a @click="currentPage = 'thanks'" :class="{active: currentPage === 'thanks'}">感謝卡牆</a>
-        <a @click="currentPage = 'proposal'" :class="{active: currentPage === 'proposal'}">創新提案</a>
-        <a @click="currentPage = 'coin'" :class="{active: currentPage === 'coin'}">活力幣</a>
+    <!-- 背景極光光暈 -->
+    <div class="aurora">
+      <span class="blob blob-1"></span>
+      <span class="blob blob-2"></span>
+      <span class="blob blob-3"></span>
+    </div>
+
+    <!-- 頂部列 -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">⚡</div>
+        <div class="brand-text">
+          <div class="brand-name">NovaLink</div>
+          <div class="brand-sub">員工體驗與互動社群平台</div>
+        </div>
       </div>
+      <div class="clock">
+        <div class="clock-time">{{ clockTime }}</div>
+        <div class="clock-date">{{ clockDate }}</div>
+      </div>
+    </header>
+
+    <!-- 導覽分頁 -->
+    <nav class="tabs">
+      <button v-for="t in tabs" :key="t.id"
+              class="tab" :class="{active: currentPage === t.id}"
+              @click="go(t.id)">
+        <span class="tab-ico">{{ t.icon }}</span>
+        <span class="tab-label">{{ t.label }}</span>
+      </button>
     </nav>
 
-    <!-- 主要內容區 -->
-    <main class="main-content">
+    <!-- 錯誤橫幅 -->
+    <div v-if="errorMsg" class="banner-error">
+      <span>⚠️ {{ errorMsg }}</span>
+      <button @click="errorMsg=''">關閉</button>
+    </div>
 
-      <!-- 情緒溫度計 -->
-      <div v-if="currentPage === 'mood'">
-        <div class="page-header">
-          <h1>情緒溫度計</h1>
-          <a :href="composeUrl('FNLKM01')" class="btn-primary">填寫今日情緒</a>
+    <main class="stage">
+
+      <!-- ===================== 總覽 ===================== -->
+      <section v-if="currentPage === 'home'" class="page">
+        <div class="hero">
+          <div class="hero-left">
+            <div class="hero-hello">您好，{{ greetingName }} 👋</div>
+            <h1 class="hero-title">歡迎回到 <span class="grad">NovaLink</span></h1>
+            <p class="hero-desc">在這裡記錄心情、傳遞感謝、提出創新，並用活力幣讓好點子成真。</p>
+          </div>
+          <button class="btn-glass" :class="{spinning: loading}" @click="refreshAll">
+            <span class="btn-ico">⟳</span> 重新整理
+          </button>
         </div>
-        <div v-if="loading" class="loading">載入中...</div>
+
+        <!-- 統計卡 -->
+        <div class="stat-grid">
+          <div class="stat-card" style="animation-delay:.05s">
+            <div class="stat-ico ico-coin">🪙</div>
+            <div class="stat-body">
+              <div class="stat-label">我的活力幣</div>
+              <div class="stat-value">{{ fmt(balance) }}</div>
+            </div>
+          </div>
+          <div class="stat-card" style="animation-delay:.12s">
+            <div class="stat-ico ico-mood">{{ todayMood ? moodEmoji(todayMood.MoodScore) : '🌤️' }}</div>
+            <div class="stat-body">
+              <div class="stat-label">今日情緒</div>
+              <div class="stat-value sm">{{ todayMood ? ('已填寫 · ' + moodLabel(todayMood.MoodScore)) : '尚未填寫' }}</div>
+            </div>
+          </div>
+          <div class="stat-card" style="animation-delay:.19s">
+            <div class="stat-ico ico-thanks">💌</div>
+            <div class="stat-body">
+              <div class="stat-label">公開感謝卡</div>
+              <div class="stat-value">{{ thanksList.length }}</div>
+            </div>
+          </div>
+          <div class="stat-card" style="animation-delay:.26s">
+            <div class="stat-ico ico-idea">💡</div>
+            <div class="stat-body">
+              <div class="stat-label">進行中提案</div>
+              <div class="stat-value">{{ proposalList.length }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="quick-row">
+          <button class="quick" @click="openModal('mood')"><span>😊</span> 填寫今日情緒</button>
+          <button class="quick" @click="openModal('thanks')"><span>💌</span> 發送感謝卡</button>
+          <button class="quick" @click="openModal('proposal')"><span>💡</span> 提出新提案</button>
+        </div>
+
+        <!-- 最新動態 -->
+        <div class="feed-grid">
+          <div class="panel">
+            <div class="panel-head"><h3>最新感謝</h3><a class="panel-more" @click="go('thanks')">查看全部 →</a></div>
+            <div v-if="thanksList.length === 0" class="mini-empty">還沒有感謝卡，當第一個送出溫暖的人吧！</div>
+            <ul v-else class="feed-list">
+              <li v-for="c in thanksList.slice(0,4)" :key="c['@unid']" class="feed-item">
+                <span class="feed-tag">{{ c.CardType }}</span>
+                <span class="feed-main"><b>{{ c.SenderName }}</b> 感謝 <b>{{ c.RecipientName }}</b></span>
+                <span class="feed-time">{{ c.SendDateStr }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>活力幣動態</h3><a class="panel-more" @click="go('coin')">查看全部 →</a></div>
+            <div v-if="coinList.length === 0" class="mini-empty">尚無交易紀錄，開始累積你的活力幣！</div>
+            <ul v-else class="feed-list">
+              <li v-for="t in coinList.slice(0,5)" :key="t['@unid']" class="feed-item">
+                <span class="coin-pill" :class="Number(t.Amount) >= 0 ? 'earn' : 'spend'">
+                  {{ Number(t.Amount) >= 0 ? '+' : '' }}{{ t.Amount }}
+                </span>
+                <span class="feed-main">{{ sourceLabel(t.Source) }}</span>
+                <span class="feed-time">{{ fmtDateTime(t.RefDate) }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== 情緒溫度計 ===================== -->
+      <section v-if="currentPage === 'mood'" class="page">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title">情緒溫度計</h2>
+            <p class="page-sub">每天記錄一次心情，填寫即可獲得 <b>+1</b> 活力幣。</p>
+          </div>
+          <button class="btn-primary" @click="openModal('mood')"><span>＋</span> 填寫今日情緒</button>
+        </div>
+
+        <div v-if="loading" class="loading"><span class="spinner"></span> 載入中…</div>
+        <div v-else-if="moodList.length === 0" class="empty">
+          <div class="empty-ico">🌈</div>
+          <div class="empty-title">還沒有情緒紀錄</div>
+          <div class="empty-sub">點右上角「填寫今日情緒」開始你的第一筆紀錄。</div>
+        </div>
         <div v-else class="card-grid">
-          <div class="card" v-for="item in moodList" :key="item['@unid']">
-            <div class="card-date">{{ item.MoodDateStr }}</div>
-            <div class="card-score">
-              <span class="mood-emoji">{{ moodEmoji(item.MoodScore) }}</span>
-              <span class="mood-label">情緒 {{ item.MoodScore }}</span>
+          <div class="mood-card" v-for="(m,i) in moodList" :key="m['@unid']" :style="{animationDelay: (i*0.04)+'s'}">
+            <div class="mood-top">
+              <span class="mood-emoji">{{ moodEmoji(m.MoodScore) }}</span>
+              <span class="mood-date">{{ m.MoodDateStr }}</span>
             </div>
-            <div class="stress-bar">
-              <span>壓力</span>
-              <div class="bar-track">
-                <div class="bar-fill" :style="{width: (item.StressLevel / 5 * 100) + '%', background: stressColor(item.StressLevel)}"></div>
-              </div>
-              <span>{{ item.StressLevel }}</span>
+            <div class="mood-label">{{ moodLabel(m.MoodScore) }}<span class="mood-score">{{ m.MoodScore }}/5</span></div>
+            <div class="metric">
+              <span class="metric-name">壓力</span>
+              <div class="track"><div class="fill" :style="{width:(m.StressLevel/5*100)+'%', background: stressColor(m.StressLevel)}"></div></div>
+              <span class="metric-val">{{ m.StressLevel }}</span>
             </div>
-            <div class="card-note" v-if="item.MoodNote">「{{ item.MoodNote }}」</div>
+            <div class="mood-note" v-if="m.MoodNote">「{{ m.MoodNote }}」</div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- 感謝卡牆 -->
-      <div v-if="currentPage === 'thanks'">
-        <div class="page-header">
-          <h1>感謝卡牆</h1>
-          <a :href="composeUrl('FNLKM02')" class="btn-primary">發送感謝卡</a>
+      <!-- ===================== 感謝卡牆 ===================== -->
+      <section v-if="currentPage === 'thanks'" class="page">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title">感謝卡牆</h2>
+            <p class="page-sub">送出感謝 <b>+2</b>、收到感謝 <b>+3</b> 活力幣，讓善意流動。</p>
+          </div>
+          <button class="btn-primary" @click="openModal('thanks')"><span>＋</span> 發送感謝卡</button>
         </div>
-        <div v-if="loading" class="loading">載入中...</div>
+
+        <div v-if="loading" class="loading"><span class="spinner"></span> 載入中…</div>
+        <div v-else-if="thanksList.length === 0" class="empty">
+          <div class="empty-ico">💛</div>
+          <div class="empty-title">感謝卡牆還是空的</div>
+          <div class="empty-sub">成為第一個傳遞溫暖的人吧！</div>
+        </div>
         <div v-else class="thanks-grid">
-          <div class="thanks-card" v-for="item in thanksList" :key="item['@unid']"
-               :class="{'is-featured': item.IsFeatured === '1'}">
-            <div class="thanks-badge" v-if="item.IsFeatured === '1'">⭐ 精選</div>
-            <div class="thanks-type">{{ item.CardType }}</div>
-            <div class="thanks-meta">
-              <span class="sender">{{ item.SenderName }}</span>
-              <span class="arrow">→</span>
-              <span class="recipient">{{ item.RecipientName }}</span>
+          <div class="thanks-card" v-for="(c,i) in thanksList" :key="c['@unid']"
+               :class="{featured: c.IsFeatured === '1'}" :style="{animationDelay: (i*0.04)+'s'}">
+            <div class="ribbon" v-if="c.IsFeatured === '1'">⭐ 精選</div>
+            <div class="thanks-type">{{ c.CardType }}</div>
+            <div class="thanks-flow">
+              <span class="chip from">{{ c.SenderName }}</span>
+              <span class="flow-arrow">→</span>
+              <span class="chip to">{{ c.RecipientName }}</span>
             </div>
-            <div class="thanks-date">{{ item.SendDateStr }}</div>
+            <div class="thanks-foot">{{ c.SendDateStr }}</div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- 創新提案 -->
-      <div v-if="currentPage === 'proposal'">
-        <div class="page-header">
-          <h1>創新提案</h1>
-          <a :href="composeUrl('FNLKM03')" class="btn-primary">提出新提案</a>
+      <!-- ===================== 創新提案 ===================== -->
+      <section v-if="currentPage === 'proposal'" class="page">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title">創新提案</h2>
+            <p class="page-sub">提案 <b>+5</b>、達標 <b>+50</b> 活力幣。用活力幣投資你看好的點子！</p>
+          </div>
+          <button class="btn-primary" @click="openModal('proposal')"><span>＋</span> 提出新提案</button>
         </div>
-        <div v-if="loading" class="loading">載入中...</div>
+
+        <div v-if="loading" class="loading"><span class="spinner"></span> 載入中…</div>
+        <div v-else-if="proposalList.length === 0" class="empty">
+          <div class="empty-ico">🚀</div>
+          <div class="empty-title">目前沒有進行中的提案</div>
+          <div class="empty-sub">提出你的第一個創新點子，開始募集活力幣。</div>
+        </div>
         <div v-else class="proposal-list">
-          <div class="proposal-card" v-for="item in proposalList" :key="item['@unid']">
-            <div class="proposal-header">
-              <span class="proposal-title">{{ item.ProposalTitle }}</span>
-              <span class="status-badge" :class="'status-' + item.Status">{{ statusLabel(item.Status) }}</span>
+          <div class="proposal-card" v-for="(p,i) in proposalList" :key="p['@unid']" :style="{animationDelay: (i*0.05)+'s'}">
+            <div class="proposal-top">
+              <h3 class="proposal-title">{{ p.ProposalTitle }}</h3>
+              <span class="status" :class="'st-'+p.Status">{{ statusLabel(p.Status) }}</span>
             </div>
-            <div class="proposal-meta">提案人：{{ item.ProposerName }} ｜ 類別：{{ item.Category }}</div>
-            <div class="progress-section">
-              <div class="progress-track">
-                <div class="progress-fill" :style="{width: progressWidth(item.CurrentCoins, item.TargetCoins)}"></div>
+            <div class="proposal-meta">提案人 · {{ p.ProposerName }}<span v-if="p.Category"> ｜ {{ p.Category }}</span></div>
+            <div class="progress-wrap">
+              <div class="ptrack"><div class="pfill" :style="{width: pct(p.CurrentCoins,p.TargetCoins)}"></div></div>
+              <div class="progress-info">
+                <span class="pcoins">{{ fmt(p.CurrentCoins||0) }} / {{ fmt(p.TargetCoins) }} 活力幣</span>
+                <span class="ppct">{{ pct(p.CurrentCoins,p.TargetCoins) }}</span>
               </div>
-              <div class="progress-label">
-                {{ item.CurrentCoins || 0 }} / {{ item.TargetCoins }} 活力幣
-                （{{ progressPercent(item.CurrentCoins, item.TargetCoins) }}）
-              </div>
+            </div>
+            <div class="proposal-actions">
+              <button class="btn-invest" :disabled="p.Status !== 'Open'" @click="openInvest(p)">
+                💰 {{ p.Status === 'Open' ? '投資這個提案' : statusLabel(p.Status) }}
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- 活力幣 -->
-      <div v-if="currentPage === 'coin'">
-        <div class="page-header">
-          <h1>活力幣交易紀錄</h1>
-        </div>
-        <div v-if="loading" class="loading">載入中...</div>
-        <div v-else>
-          <div class="coin-table-wrap">
-            <table class="coin-table">
-              <thead>
-                <tr>
-                  <th>交易時間</th>
-                  <th>類型</th>
-                  <th>金額</th>
-                  <th>來源</th>
-                  <th>說明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in coinList" :key="item['@unid']"
-                    :class="item.TransType === 'Earn' ? 'earn-row' : 'spend-row'">
-                  <td>{{ item.RefDate }}</td>
-                  <td>{{ item.TransType === 'Earn' ? '+ 獲得' : '- 使用' }}</td>
-                  <td class="amount">{{ item.Amount }}</td>
-                  <td>{{ item.Source }}</td>
-                  <td>{{ item.Description }}</td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- ===================== 活力幣 ===================== -->
+      <section v-if="currentPage === 'coin'" class="page">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title">活力幣</h2>
+            <p class="page-sub">你的完整交易明細。</p>
           </div>
         </div>
-      </div>
+
+        <div class="balance-card">
+          <div class="balance-ico">🪙</div>
+          <div>
+            <div class="balance-label">目前餘額</div>
+            <div class="balance-num">{{ fmt(balance) }}</div>
+          </div>
+          <div class="balance-meta">
+            <div><span class="up">＋{{ fmt(totalEarn) }}</span> 累積獲得</div>
+            <div><span class="down">－{{ fmt(totalSpend) }}</span> 累積使用</div>
+          </div>
+        </div>
+
+        <div v-if="loading" class="loading"><span class="spinner"></span> 載入中…</div>
+        <div v-else-if="coinList.length === 0" class="empty">
+          <div class="empty-ico">🪙</div>
+          <div class="empty-title">尚無交易紀錄</div>
+          <div class="empty-sub">填寫情緒、發送感謝卡或提案都能獲得活力幣。</div>
+        </div>
+        <div v-else class="table-wrap">
+          <table class="coin-table">
+            <thead>
+              <tr><th>交易時間</th><th>類型</th><th class="ta-r">金額</th><th>來源</th><th>說明</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="t in coinList" :key="t['@unid']">
+                <td class="muted">{{ fmtDateTime(t.RefDate) }}</td>
+                <td><span class="ttype" :class="Number(t.Amount)>=0?'earn':'spend'">{{ Number(t.Amount)>=0?'獲得':'使用' }}</span></td>
+                <td class="ta-r amount" :class="Number(t.Amount)>=0?'earn':'spend'">{{ Number(t.Amount)>=0?'+':'' }}{{ t.Amount }}</td>
+                <td>{{ sourceLabel(t.Source) }}</td>
+                <td class="muted">{{ t.Description }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
     </main>
+
+    <!-- ===================== 彈窗 ===================== -->
+    <transition name="fade">
+    <div v-if="modal" class="modal-mask" @click.self="closeModal">
+      <div class="modal">
+        <div class="modal-head">
+          <h3>{{ modalTitle }}</h3>
+          <button class="x" @click="closeModal">✕</button>
+        </div>
+
+        <!-- 情緒 -->
+        <div v-if="modal==='mood'" class="modal-body">
+          <label class="fld-label">今天心情如何？</label>
+          <div class="emoji-pick">
+            <button v-for="s in 5" :key="s" type="button"
+                    class="emoji-btn" :class="{on: moodForm.MoodScore === String(s)}"
+                    @click="moodForm.MoodScore = String(s)">
+              <span class="eb-emoji">{{ moodEmoji(String(s)) }}</span>
+              <span class="eb-txt">{{ moodLabel(String(s)) }}</span>
+            </button>
+          </div>
+
+          <label class="fld-label">壓力程度：<b>{{ moodForm.StressLevel }}</b> / 5</label>
+          <input type="range" min="1" max="5" v-model="moodForm.StressLevel" class="range">
+          <div class="range-scale"><span>很輕鬆</span><span>壓力很大</span></div>
+
+          <label class="fld-label">部門（選填）</label>
+          <input type="text" v-model="moodForm.Department" class="fld" placeholder="例如：資訊部">
+
+          <label class="fld-label">今日一句話（選填）</label>
+          <input type="text" v-model="moodForm.MoodNote" class="fld" placeholder="寫下今天的一句話…">
+
+          <label class="check"><input type="checkbox" v-model="moodForm.IsNotePublic"> 公開這句話到動態</label>
+        </div>
+
+        <!-- 感謝卡 -->
+        <div v-if="modal==='thanks'" class="modal-body">
+          <label class="fld-label">收件者 *</label>
+          <input type="text" v-model="thanksForm.RecipientID" class="fld" placeholder="例如：S1011/XRedSchool">
+          <div class="hint">輸入對方的 Notes 名稱，例如 <code>S1011/XRedSchool</code></div>
+
+          <label class="fld-label">卡片類型 *</label>
+          <div class="type-pick">
+            <button v-for="ct in cardTypes" :key="ct" type="button"
+                    class="type-btn" :class="{on: thanksForm.CardType === ct}"
+                    @click="thanksForm.CardType = ct">{{ ct }}</button>
+          </div>
+
+          <label class="fld-label">感謝訊息</label>
+          <textarea v-model="thanksForm.CardMessage" class="fld area" rows="3" placeholder="說說你想感謝的事…"></textarea>
+
+          <label class="check"><input type="checkbox" v-model="thanksForm.IsPublic"> 公開到感謝卡牆</label>
+        </div>
+
+        <!-- 提案 -->
+        <div v-if="modal==='proposal'" class="modal-body">
+          <label class="fld-label">提案標題 *</label>
+          <input type="text" v-model="proposalForm.ProposalTitle" class="fld" placeholder="一句話說明你的點子">
+
+          <label class="fld-label">類別</label>
+          <div class="type-pick">
+            <button v-for="cat in categories" :key="cat" type="button"
+                    class="type-btn" :class="{on: proposalForm.Category === cat}"
+                    @click="proposalForm.Category = cat">{{ cat }}</button>
+          </div>
+
+          <label class="fld-label">問題描述</label>
+          <textarea v-model="proposalForm.ProblemDesc" class="fld area" rows="2" placeholder="想解決什麼問題？"></textarea>
+
+          <label class="fld-label">解決方案</label>
+          <textarea v-model="proposalForm.SolutionDesc" class="fld area" rows="2" placeholder="你打算怎麼做？"></textarea>
+
+          <label class="fld-label">目標活力幣</label>
+          <input type="number" v-model="proposalForm.TargetCoins" class="fld" min="1" placeholder="100">
+          <div class="hint">提案會立即公開募資。達標後自動進入審核。</div>
+        </div>
+
+        <!-- 投資 -->
+        <div v-if="modal==='invest'" class="modal-body">
+          <div class="invest-target">
+            <div class="it-title">{{ investTarget.ProposalTitle }}</div>
+            <div class="it-meta">目前 {{ fmt(investTarget.CurrentCoins||0) }} / {{ fmt(investTarget.TargetCoins) }} 活力幣</div>
+          </div>
+          <div class="balance-line">你的餘額：<b>{{ fmt(balance) }}</b> 活力幣</div>
+
+          <label class="fld-label">投資金額 *</label>
+          <input type="number" v-model="investForm.InvestAmount" class="fld" min="1" placeholder="輸入要投資的活力幣">
+
+          <label class="fld-label">留言（選填）</label>
+          <input type="text" v-model="investForm.InvestNote" class="fld" placeholder="為這個提案加油…">
+        </div>
+
+        <div v-if="modalError" class="modal-error">{{ modalError }}</div>
+
+        <div class="modal-foot">
+          <a class="alt-link" @click="fallbackForm">改用 Notes 表單填寫</a>
+          <div class="foot-btns">
+            <button class="btn-ghost" @click="closeModal" :disabled="submitting">取消</button>
+            <button class="btn-primary" @click="submit" :disabled="submitting">
+              <span v-if="submitting" class="spinner sm"></span>{{ submitting ? '送出中…' : '送出' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </transition>
+
+    <!-- Toast -->
+    <transition name="toast">
+      <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
+    </transition>
+
   </div>
 
   <script src="js/app.js"></script>
