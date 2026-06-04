@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <note default='true' class='icon' xmlns='http://www.lotus.com/dxl' version='12.0'
  maintenanceversion='2.0' replicaid='48258E0C0021612A'>
-<noteinfo noteid='11e' unid='B0A917B43CFADC3A48258E0C00216137' sequence='21'>
+<noteinfo noteid='11e' unid='B0A917B43CFADC3A48258E0C00216137' sequence='39'>
 <created><datetime>20260604T140435,75+08</datetime></created>
-<modified><datetime>20260604T204647,11+08</datetime></modified>
-<revised><datetime>20260604T204647,10+08</datetime></revised>
-<lastaccessed><datetime>20260604T204647,10+08</datetime></lastaccessed>
+<modified><datetime>20260604T215136,71+08</datetime></modified>
+<revised><datetime>20260604T215136,70+08</datetime></revised>
+<lastaccessed><datetime>20260604T215136,70+08</datetime></lastaccessed>
 <addedtofile><datetime>20260604T140435,76+08</datetime></addedtofile></noteinfo>
 <updatedby><name>CN=B11209013/O=XRedSchool</name></updatedby>
 <wassignedby><name>CN=B11209013/O=XRedSchool</name></wassignedby>
@@ -24,10 +24,12 @@ d30fAAAAAPHXd33Xd3d913d9HwAAAADx13d913d3fdd3fR8AAAAA8R3d0dd3d30d3dEfAAAAAA8R
 EREdd3fRERER8AAAAAAA////Ed3dEf///wAAAAAAAAAAAPERER8AAAAAAAAAAAAAAAAP///wAAAA
 AAAAUEECICABAAD/////+A4DgA==
 </rawitemdata></item>
-<item name='$DefaultFrameset'><text>RNLKM01 MainFrame</text></item>
 <item name='$Daos'><text>0</text></item>
 <item name='$LargeSummary'><text>0</text></item>
+<item name='$LaunchXPageRunOnServer'><text>0</text></item>
+<item name='$AllowRESTDbAPI'><number>2</number></item>
+<item name='$DefaultFrameset'><text>RNLKM01 MainFrame</text></item>
 <item name='$TITLE'><text>NovaLink</text></item>
-<item name='$Flags'><text>J7</text></item>
+<item name='$Flags'><text>J7F</text></item>
 <item name='$FlagsNoRefresh'><text>rv</text></item></note>
 

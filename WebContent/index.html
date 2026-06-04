@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ NovaLink</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- 頂部導覽列 -->
+    <nav class="navbar">
+      <div class="navbar-brand">⚡ NovaLink</div>
+      <div class="navbar-menu">
+        <a @click="currentPage = 'mood'" :class="{active: currentPage === 'mood'}">情緒溫度計</a>
+        <a @click="currentPage = 'thanks'" :class="{active: currentPage === 'thanks'}">感謝卡牆</a>
+        <a @click="currentPage = 'proposal'" :class="{active: currentPage === 'proposal'}">創新提案</a>
+        <a @click="currentPage = 'coin'" :class="{active: currentPage === 'coin'}">活力幣</a>
+      </div>
+    </nav>
+
+    <!-- 主要內容區 -->
+    <main class="main-content">
+
+      <!-- 情緒溫度計 -->
+      <div v-if="currentPage === 'mood'">
+        <div class="page-header">
+          <h1>情緒溫度計</h1>
+          <a :href="composeUrl('FNLKM01')" class="btn-primary">填寫今日情緒</a>
+        </div>
+        <div v-if="loading" class="loading">載入中...</div>
+        <div v-else class="card-grid">
+          <div class="card" v-for="item in moodList" :key="item['@unid']">
+            <div class="card-date">{{ item.MoodDateStr }}</div>
+            <div class="card-score">
+              <span class="mood-emoji">{{ moodEmoji(item.MoodScore) }}</span>
+              <span class="mood-label">情緒 {{ item.MoodScore }}</span>
+            </div>
+            <div class="stress-bar">
+              <span>壓力</span>
+              <div class="bar-track">
+                <div class="bar-fill" :style="{width: (item.StressLevel / 5 * 100) + '%', background: stressColor(item.StressLevel)}"></div>
+              </div>
+              <span>{{ item.StressLevel }}</span>
+            </div>
+            <div class="card-note" v-if="item.MoodNote">「{{ item.MoodNote }}」</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 感謝卡牆 -->
+      <div v-if="currentPage === 'thanks'">
+        <div class="page-header">
+          <h1>感謝卡牆</h1>
+          <a :href="composeUrl('FNLKM02')" class="btn-primary">發送感謝卡</a>
+        </div>
+        <div v-if="loading" class="loading">載入中...</div>
+        <div v-else class="thanks-grid">
+          <div class="thanks-card" v-for="item in thanksList" :key="item['@unid']"
+               :class="{'is-featured': item.IsFeatured === '1'}">
+            <div class="thanks-badge" v-if="item.IsFeatured === '1'">⭐ 精選</div>
+            <div class="thanks-type">{{ item.CardType }}</div>
+            <div class="thanks-meta">
+              <span class="sender">{{ item.SenderName }}</span>
+              <span class="arrow">→</span>
+              <span class="recipient">{{ item.RecipientName }}</span>
+            </div>
+            <div class="thanks-date">{{ item.SendDateStr }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 創新提案 -->
+      <div v-if="currentPage === 'proposal'">
+        <div class="page-header">
+          <h1>創新提案</h1>
+          <a :href="composeUrl('FNLKM03')" class="btn-primary">提出新提案</a>
+        </div>
+        <div v-if="loading" class="loading">載入中...</div>
+        <div v-else class="proposal-list">
+          <div class="proposal-card" v-for="item in proposalList" :key="item['@unid']">
+            <div class="proposal-header">
+              <span class="proposal-title">{{ item.ProposalTitle }}</span>
+              <span class="status-badge" :class="'status-' + item.Status">{{ statusLabel(item.Status) }}</span>
+            </div>
+            <div class="proposal-meta">提案人：{{ item.ProposerName }} ｜ 類別：{{ item.Category }}</div>
+            <div class="progress-section">
+              <div class="progress-track">
+                <div class="progress-fill" :style="{width: progressWidth(item.CurrentCoins, item.TargetCoins)}"></div>
+              </div>
+              <div class="progress-label">
+                {{ item.CurrentCoins || 0 }} / {{ item.TargetCoins }} 活力幣
+                （{{ progressPercent(item.CurrentCoins, item.TargetCoins) }}）
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 活力幣 -->
+      <div v-if="currentPage === 'coin'">
+        <div class="page-header">
+          <h1>活力幣交易紀錄</h1>
+        </div>
+        <div v-if="loading" class="loading">載入中...</div>
+        <div v-else>
+          <div class="coin-table-wrap">
+            <table class="coin-table">
+              <thead>
+                <tr>
+                  <th>交易時間</th>
+                  <th>類型</th>
+                  <th>金額</th>
+                  <th>來源</th>
+                  <th>說明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in coinList" :key="item['@unid']"
+                    :class="item.TransType === 'Earn' ? 'earn-row' : 'spend-row'">
+                  <td>{{ item.RefDate }}</td>
+                  <td>{{ item.TransType === 'Earn' ? '+ 獲得' : '- 使用' }}</td>
+                  <td class="amount">{{ item.Amount }}</td>
+                  <td>{{ item.Source }}</td>
+                  <td>{{ item.Description }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
