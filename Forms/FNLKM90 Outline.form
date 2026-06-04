@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<form name='FNLKM90 Outline' alias='FNLKM90' xmlns='http://www.lotus.com/dxl'
+ version='12.0' maintenanceversion='2.0' replicaid='48258E0C0021612A' publicaccess='false'
+ designerversion='8.5.3' comment='左側導覽' renderpassthrough='true'>
+<noteinfo noteid='' unid='' sequence='1'/>
+<updatedby><name>CN=B11209013/O=XRedSchool</name></updatedby>
+<wassignedby><name>CN=B11209013/O=XRedSchool</name></wassignedby>
+<body><richtext>
+<pardef id='1'/>
+<par def='1'><run><font size='13pt' style='bold' name='微軟正黑體'
+ pitch='variable' truetype='true' familyid='20'/>⚡ NovaLink</run></par>
+<par def='1'><embeddedoutline outline='ONLKM01 ClientOutline'
+ showtwistie='true' widthtype='fitwindow' heighttype='fitwindow'>
+<title><layout labelalign='topleft' labelhoffset='0' labelvoffset='0'/></title>
+<toplevel><layout labelalign='topleft' imagealign='topleft'
+ labelhoffset='0.15in' labelvoffset='0'/></toplevel>
+<sublevel><layout labelalign='topleft' entryhoffset='0.15in'
+ imagealign='topleft' labelhoffset='0.15in' labelvoffset='0'/></sublevel>
+</embeddedoutline></par>
+</richtext></body>
+<item name='$$ScriptName' summary='false' sign='true'><text>FNLKM90</text></item>
+</form>
