@@ -272,6 +272,7 @@ createApp({
     },
 
     // 發活力幣（複製後端 NLK_IssueCoin 邏輯；採盡力而為，失敗不阻擋主流程）
+    // 注意：不帶 computewithform，避免 Domino 對 datetime 格式驗證報 400
     async issueCoin(employeeID, amount, source, refDocID, desc) {
       try {
         if (!employeeID) return;
@@ -279,20 +280,26 @@ createApp({
         const slash = name.indexOf('/');
         if (slash > 0) name = name.substring(0, slash);
         if (name.indexOf('CN=') === 0) name = name.substring(3);
+        // 日期用 Domino 可接受的字串格式（MM/DD/YYYY HH:MM:SS）
+        const nd = new Date();
+        const p = n => String(n).padStart(2,'0');
+        const refDateStr = `${p(nd.getMonth()+1)}/${p(nd.getDate())}/${nd.getFullYear()} ${p(nd.getHours())}:${p(nd.getMinutes())}:${p(nd.getSeconds())}`;
         const body = {
-          EmployeeID:  employeeID,
+          EmployeeID:   employeeID,
           EmployeeName: name,
-          Amount:      amount,
-          TransType:   amount >= 0 ? 'Earn' : 'Spend',
-          Source:      source,
-          RefDocID:    refDocID || '',
-          Description: desc,
-          RefDate:     new Date().toISOString(),
-          CoinReaders: [employeeID, '[NLK_SysAdmin]'],
-          CoinAuthors: ['[NLK_SysAdmin]'],
+          Amount:       amount,
+          TransType:    amount >= 0 ? 'Earn' : 'Spend',
+          Source:       source,
+          RefDocID:     refDocID || '',
+          Description:  desc,
+          RefDate:      refDateStr,
+          CoinReaders:  [employeeID, '[NLK_SysAdmin]'],
+          CoinAuthors:  ['[NLK_SysAdmin]'],
         };
-        await axios.post(`${DOCS}?form=FNLKT05&computewithform=true`, body);
-      } catch (e) { console.warn('[NovaLink] 發放活力幣失敗', source, e); }
+        // 不帶 computewithform：FNLKT05 欄位全是 editable，不需要伺服器端計算
+        // 省略可避免 Domino 對 datetime/readers 欄位格式過嚴的 400 錯誤
+        await axios.post(`${DOCS}?form=FNLKT05`, body);
+      } catch (e) { if (e?.response?.status && e.response.status >= 400) console.warn('[NovaLink] 發放活力幣失敗', source, e?.response?.status); }
     },
 
     async afterCreate(page, msg) {
