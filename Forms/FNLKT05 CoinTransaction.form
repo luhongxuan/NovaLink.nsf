@@ -20,7 +20,7 @@ Yg4BAIQAAAAAAAAAAAA=
 Yg4BAIQAAAAAAAAAAAA=
 </compositedata></par>
 <par def='1'><run><font size='12pt' name='serif'/><field type='number'
- kind='editable' name='Amount'><numberformat format='general' varying='true'
+ kind='editable' name='Amount'><numberformat format='general' varying='true'-
  digits='0' punctuated='false' parens='false' percent='false' bytes='false'/></field></run><compositedata
  type='98' prevtype='65418' nexttype='222' afterparcount='5' containertype='65418'
  aftercontainercount='1' afterbegincount='3'>

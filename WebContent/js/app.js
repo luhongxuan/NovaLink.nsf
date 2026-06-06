@@ -283,7 +283,7 @@ createApp({
         // 日期用 Domino 可接受的字串格式（MM/DD/YYYY HH:MM:SS）
         const nd = new Date();
         const p = n => String(n).padStart(2,'0');
-        const refDateStr = `${p(nd.getMonth()+1)}/${p(nd.getDate())}/${nd.getFullYear()} ${p(nd.getHours())}:${p(nd.getMinutes())}:${p(nd.getSeconds())}`;
+        const refDateStr = `${nd.getFullYear()}/${p(nd.getMonth()+1)}/${p(nd.getDate())} ${p(nd.getHours())}:${p(nd.getMinutes())}:${p(nd.getSeconds())}`;
         const body = {
           EmployeeID:   employeeID,
           EmployeeName: name,
@@ -293,13 +293,13 @@ createApp({
           RefDocID:     refDocID || '',
           Description:  desc,
           RefDate:      refDateStr,
-          CoinReaders:  [employeeID, '[NLK_SysAdmin]'],
+          CoinReaders: [employeeID, name + '/O=XRedSchool', '[NLK_SysAdmin]'],
           CoinAuthors:  ['[NLK_SysAdmin]'],
         };
         // 不帶 computewithform：FNLKT05 欄位全是 editable，不需要伺服器端計算
         // 省略可避免 Domino 對 datetime/readers 欄位格式過嚴的 400 錯誤
-        await axios.post(`${DOCS}?form=FNLKT05`, body);
-      } catch (e) { if (e?.response?.status && e.response.status >= 400) console.warn('[NovaLink] 發放活力幣失敗', source, e?.response?.status); }
+        await axios.post(`${DOCS}?form=FNLKT05&computewithform=true`, body);
+      } catch (e) { console.warn('[NovaLink] 發放活力幣失敗', source, e); }
     },
 
     async afterCreate(page, msg) {
